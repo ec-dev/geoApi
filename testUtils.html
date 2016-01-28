@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Test Page</title>
+    <style>
+        .layerTile { position: absolute; }
+    </style>
+</head>
+<body>
+    <div id="basemapG" style="height:100px; width:100px;" ></div>
+    <div id="map" style="height:90%; width: 100%;"></div>
+    <script src="dist/geoapi.min.js"></script>
+    <script>
+        geoapi('http://js.arcgis.com/3.14/', window).then(function (api) {
+
+            // testing arcgis utils
+            var aac_ecozone = 'df9cabb79d4c46c387d7942a1a18467e';
+
+            var deferred = api.arcgisUtils.getItem(aac_ecozone);
+
+            deferred.then(function(data){
+                console.log(data);
+            }, function(error){
+                console.log('Error:', error.code, ' Message: ', error.message);
+            });
+
+        });
+</script>
+</body>
+</html>

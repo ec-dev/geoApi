@@ -16,14 +16,38 @@
 
             // testing arcgis utils
             var aac_ecozone = 'df9cabb79d4c46c387d7942a1a18467e';
+            var test_map = '61262e0e85a049a6b3041a64d493f610';
 
-            var deferred = api.arcgisUtils.getItem(aac_ecozone);
+            var aac_config = api.utils.generateConfig(aac_ecozone);
 
-            deferred.then(function(data){
+            aac_config.then(function(data) {
                 console.log(data);
-            }, function(error){
-                console.log('Error:', error.code, ' Message: ', error.message);
+            }, function(error) {
+                console.log(error);
             });
+
+            var test_map_config = api.utils.generateConfig(test_map);
+
+            test_map_config.then(function(data) {
+                console.log(data);
+            }, function(error) {
+                console.log(error);
+            });
+
+            // console.log('AAC:')
+            // console.log(aac_config);
+            // console.log('Test Map:');
+            // console.log(test_map_config);
+
+            // var deferred = api.arcgisUtils.getItem(aac_ecozone);
+
+            // deferred.then(function(data){
+            //     console.log(data);
+            // }, function(error){
+            //     console.log('Error:', error.code, ' Message: ', error.message);
+            // });
+
+
 
         });
 </script>

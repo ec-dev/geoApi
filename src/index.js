@@ -5,7 +5,7 @@ const basemap = require('./basemap.js');
 const mapManager = require('./mapManager.js');
 const attribute = require('./attribute.js');
 const events = require('./events.js');
-const arcgisUtils = require('./utils.js');
+const utils = require('./utils.js');
 
 function initAll(esriBundle) {
     let debug = false;
@@ -17,7 +17,7 @@ function initAll(esriBundle) {
     api.mapManager = mapManager(esriBundle);
     api.attribs = attribute(esriBundle);
     api.events = events();
-    api.arcgisUtils: arcgisUtils(esriBundle).arcgisUtils,
+    api.utils: utils(esriBundle),
     api.debug = function () {
         if (arguments.length === 1) {
             debug = arguments[0] === true;
@@ -39,7 +39,7 @@ module.exports = function (esriLoaderUrl, window) {
     // in esriBundle
     const esriDeps = [
         ['dojo/Deferred', 'Deferred'],
-        ['esri/arcgis/utils', 'arcgisUtils'],
+        ['esri/arcgis/utils', 'utils'],
         ['esri/config', 'esriConfig'],
         ['esri/dijit/Basemap', 'Basemap'],
         ['esri/dijit/BasemapGallery', 'BasemapGallery'],

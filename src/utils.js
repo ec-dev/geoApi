@@ -1,16 +1,18 @@
-const _ = require('./lodash');
+const _ = require('lodash');
 
 /**
   * @ngdoc module
-  * @name arcgisUtils
+  * @name utils
   * @module geoAPI
   * @description
   *
-  * The `arcgisUtils` module provides arcgis online resource related functions.
+  * The `utils` module provides arcgis online resource related functions.
   *
   * This module exports an object with the following properties
-  * - `arcgisUtils` {type} esri/arcgis/utils class
+  * - `utils` {type} esri/arcgis/utils class
   * - `generateConfig` {function} function make ramp style config based on ArcGIS online web resource id
+  * <h4>TODO</h4>
+  * <p>Update code to generate the standard config structure.</p>
   */
 
 module.exports = function (esriBundle) {
@@ -18,45 +20,49 @@ module.exports = function (esriBundle) {
     /**
      * @ngdoc method
      * @name generateConfig
-     * @memberof arcgisUtils
+     * @memberof utils
      * @description make ramp style config based on ArcGIS online web resource id
      * @param {String} webMapId arcgis online web resource id or web map id
      * @return {Object} an object with config structure of a layer
      */
     function generateConfig(webMapId) {
         // var aac_ecozone = 'df9cabb79d4c46c387d7942a1a18467e';
+        return new Promise((resolve, reject) => {
+            let deferred = esriBundle.utils.getItem(webMapId);
 
-        var deferred = esriBundle.arcgisUtils.getItem(webMapId);
+            deferred.then(function (data) {
+                if (_.has(data, 'item')) {
+                    let object = processWebMapItem(data.item);
 
-        var layer = {};
+                    if (_.has(data, 'itemData')) {
+                        let config = processWebMapData(data.itemData);
 
-        deferred.then(function (data) {
-            if (_.has(data, 'item')) {
-                let object = processWebMapItem(data.item, layer);
+                        // _.assign(config, object);
+                        _.set(object, 'layerInfo', config);
 
-                if (_.has(data, 'itemData')) {
-                    let layers = processWebMapData(data.itemData, layer);
+                        // has item data, create config object
+                        // todo: create a nested layer config item or split into different layers
+                        resolve(object); // TODO incomplete
+                    } else {
 
-                    // has item data, create layers object
-                    // todo: create a nested layer config item or split into different layers
-                    return layers; // TODO incomplete
+                        // no itemData, create a layer config
+                        // todo: check the bare minimum for layer config for the viewer: id, url, layerType
+                        resolve(object);
+                    }
                 } else {
 
-                    // no itemData, create a layer config
-                    // todo: check the bare minimum for layer config for the viewer: id, url, layerType
-                    return object;
+                    // id provided does not have ArcGIS online resources asscoiated with it.
+                    reject('No item or itemData to process');
                 }
-            }
 
-            console.log('Info: ', webMapId +
-                ' does not have resources required to extract information.');
-        }, function (error) {
-            console.log('Error:', error.code, ' Message: ', error.message);
+            }, function (error) {
+                console.log('Error:', error.code, ' Message: ', error.message);
+            });
         });
     }
 
     return {
-        arcgisUtils: esriBundle.arcgisUtils,
+        utils: esriBundle.utils,
         generateConfig: generateConfig
     };
 
@@ -66,6 +72,8 @@ module.exports = function (esriBundle) {
     // contains title, description, other metadata
     function processWebMapItem(data) {
         var layerInfo = {};
+
+        // console.log('Process web map item');
 
         setProperty(layerInfo, 'description', data, 'description');
         setProperty(layerInfo, 'spatialReference', data, 'spatialReference');
@@ -87,9 +95,9 @@ module.exports = function (esriBundle) {
     function processWebMapData(data) {
         let config = {};
 
-        let basemaps = processBaseMap(data);
-
-        _.set(config, 'basemaps', basemaps);
+        // console.log('process web map data.');
+        let basemapsConfig = processBaseMap(data);
+        _.set(config, 'basemaps', basemapsConfig);
 
         let layers = processOperationalLayers(data);
         _.set(config, 'layers', layers);
@@ -105,27 +113,27 @@ module.exports = function (esriBundle) {
         var basemaps = [];
         var lBasemap = {};
 
+        // check to make sure data has baseMap.baseMapLayers
         if (_.has(data, 'baseMap')) {
 
-            let baseMapLayers = data.baseMap;
+            if (_.has(data.baseMap, 'baseMapLayers')) {
 
-            _.forEach(baseMapLayers, (baseMapLayer) => {
+                let baseMapArray = data.baseMap.baseMapLayers;
 
-                // process baseMapLayer
-                _.set(lBasemap, 'id', baseMapLayer.id);
-                _.set(lBasemap, 'layerType', baseMapLayer.layerType);
-                _.set(lBasemap, 'url', baseMapLayer.url);
+                _.forEach(baseMapArray, function (basemapItem) {
 
-                // test the following
-                // let loWrap = _(baseMapLayer);
-                // loWrap.get('id');
-                // loWrap.get('layerType');
-                // loWrap.get('url');
-                // add to baseMapLayer collection in config
-                basemaps.push(lBasemap);
-            });
+                    lBasemap = {};
+                    console.log('basemap id:' + basemapItem.id);
 
-            return basemaps;
+                    // process baseMapLayer and create a new  basemap config setting object
+                    _.set(lBasemap, 'id', basemapItem.id);
+                    _.set(lBasemap, 'layerType', basemapItem.layerType);
+                    _.set(lBasemap, 'url', basemapItem.url);
+
+                    basemaps.push(lBasemap);
+                });
+                return basemaps;
+            }
         }
 
         return null;
@@ -136,13 +144,15 @@ module.exports = function (esriBundle) {
         var layers = [];
         var lLayer = {};
 
+        // make sure operationalLayers exists
         if (_.has(data, 'operationalLayers')) {
 
             let operationalLayers = data.operationalLayers;
 
-            _.forEach(operationalLayers, (operationalLayer) => {
-                // process operationLayer
+            _.forEach(operationalLayers, function (operationalLayer) {
 
+                // process operationLayer
+                lLayer = {};
                 _.set(lLayer, 'id', operationalLayer.id);
                 _.set(lLayer, 'layerType', operationalLayer.layerType);
                 _.set(lLayer, 'title', operationalLayer.title);
@@ -153,10 +163,12 @@ module.exports = function (esriBundle) {
             });
 
             return layers;
+        } else {
+
+            // console.log('warning: no operationalLayers');
+            return null;
         }
 
-        console.log('warning: no operationalLayers');
-        return null;
     }
 
     // process spatial reference
@@ -166,9 +178,11 @@ module.exports = function (esriBundle) {
         if (_.has(data, 'spatialReference')) {
             return { latestWkid: data.spatialReference.latestWkid,
                 wkid: data.spatialReference.wkid };
+        } else {
+
+            // console.log('warning: no spatialReference info.');
+            return null;
         }
-        console.log('warning: no spatialReference info.');
-        return null;
     }
 
 };

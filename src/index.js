@@ -17,7 +17,7 @@ function initAll(esriBundle) {
     api.mapManager = mapManager(esriBundle);
     api.attribs = attribute(esriBundle);
     api.events = events();
-    api.utils: utils(esriBundle),
+    api.utils = utils(esriBundle);
     api.debug = function () {
         if (arguments.length === 1) {
             debug = arguments[0] === true;
